@@ -5,4 +5,5 @@ django-cors-headers>=4.4
 python-dotenv>=1.0
 whitenoise>=6.7
 gunicorn>=22.0; sys_platform != "win32"
-mysqlclient>=2.2; sys_platform != "win32"   # MySQL driver for Linux/Mac/Docker. Windows dev uses SQLite, so it is skipped there.
+PyMySQL[rsa]>=1.1
+psycopg[binary]>=3.2
