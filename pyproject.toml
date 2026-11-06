@@ -1,2 +1,5 @@
+[tool.vercel]
+entrypoint = "wsgi:application"
+
 [tool.vercel.scripts]
 build = "npm --prefix frontend ci && npm --prefix frontend run build"
