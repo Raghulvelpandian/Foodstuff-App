@@ -1,0 +1,26 @@
+import {useState} from 'react';
+import {Link,Navigate,useNavigate,useLocation} from 'react-router-dom';
+import {Loader2,Tag,Info} from 'lucide-react';
+import {useApp} from '../context/AppContext.jsx'; import * as api from '../services/api.js'; import {money} from '../lib/format.js'; import {APP} from '../config.js'; import AddressSearch from '../components/AddressSearch.jsx'; import FoodImg from '../components/FoodImg.jsx';
+export default function Checkout(){
+  const {user,lines,totals,promo,applyPromo,removePromo,clear,location,notify}=useApp(),nav=useNavigate(),loc=useLocation();
+  const [f,setF]=useState({name:user?.name||'',phone:user?.phone||'',address:user?.address||(location!=='Your Location'?location:''),notes:'',coords:null}),[pay,setPay]=useState('online'),[e,setE]=useState({}),[busy,setBusy]=useState(false),[err,setErr]=useState('');
+  const [code,setCode]=useState(''),[pm,setPm]=useState('');
+  if(!user)return<Navigate to="/login" state={{from:loc.pathname}} replace/>;
+  if(!lines.length)return<div className="container sec sec--page"><div className="empty-s"><h4>Your cart is empty</h4><p>Add some food before checking out.</p><Link className="btn btn--primary" to="/foods">Browse Foods</Link></div></div>;
+  const on=ev=>{setF({...f,[ev.target.name]:ev.target.value});setE({...e,[ev.target.name]:''})};
+  async function submit(ev){ev.preventDefault();if(busy)return;const x={};
+    if(!f.name.trim())x.name='Enter the recipient name.';if(!/^[+\d][\d\s-]{6,}$/.test(f.phone.trim()))x.phone='Enter a valid phone number.';if(f.address.trim().length<8)x.address='Search and select your delivery address.';
+    setE(x);if(Object.keys(x).length)return;setBusy(true);setErr('');
+    try{const o=await api.placeOrder({email:user.email,name:f.name,phone:f.phone,address:f.address,coords:f.coords,notes:f.notes,paymentMethod:pay,payment:pay==='online'?'Online (simulated)':'Cash on delivery',
+      items:lines.map(l=>({id:l.food.id,name:l.food.name,price:l.food.price,qty:l.qty})),totals,promo});clear();removePromo();notify('Order placed!');nav(`/orders/${o.id}`,{replace:true})}
+    catch(er){setErr(er.message)}finally{setBusy(false)}}
+  const F=({n,l,ph,area,t='text'})=>{const C=area?'textarea':'input';return(<div className={`fld ${e[n]?'has-err':''}`}><label htmlFor={n}>{l}</label><C id={n} name={n} type={area?undefined:t} rows={area?3:undefined} placeholder={ph} value={f[n]} onChange={on} aria-invalid={!!e[n]}/>{e[n]&&<small role="alert">{e[n]}</small>}</div>)};
+  return(<section className="sec sec--page"><div className="container"><div className="page-h"><h1>Checkout</h1></div>
+    <form className="co" onSubmit={submit} noValidate><div className="co__l"><div className="card form"><h3>Delivery details</h3>{F({n:"name",l:"Full name",ph:"Recipient name"})}{F({n:"phone",l:"Phone number",ph:"+1 555 000 0000",t:"tel"})}<AddressSearch id="address" label="Delivery address" value={f.address} onChange={v=>{setF(p=>({...p,address:v}));setE(p=>({...p,address:''}))}} onSelect={i=>setF(p=>({...p,coords:[i.lat,i.lon]}))} error={e.address}/>{F({n:"notes",l:"Delivery notes (optional)",ph:"Gate code, landmarks…",area:true})}</div>
+      <div className="card form"><h3>Payment</h3>{[['online','Pay online','Simulated in this demo. No card details are collected.'],['cod','Cash on delivery','Pay the courier when your food arrives.']].map(([v,t,d])=><label key={v} className={`radio ${pay===v?'on':''}`}><input type="radio" name="pay" checked={pay===v} onChange={()=>setPay(v)}/><span><b>{t}</b><small>{d}</small></span></label>)}
+        <p className="alert dev"><Info size={16}/>Real payments need a gateway (e.g. Stripe) connected through your Django backend.</p></div></div>
+      <aside className="card co__s"><h3>Order summary</h3><ul>{lines.map(({food:x,qty})=><li key={x.id}><FoodImg food={x} className="fimg--s"/><span>{x.name} <small>× {qty}</small></span><b>{money(x.price*qty)}</b></li>)}</ul>
+        {promo?<p className="alert ok"><Tag size={14}/>{promo} applied <button type="button" className="link" onClick={removePromo}>Remove</button></p>:<div className="promo-f"><input value={code} onChange={ev=>{setCode(ev.target.value);setPm('')}} placeholder="Promo code" aria-label="Promo code"/><button type="button" className="btn btn--ghost btn--sm" onClick={()=>setPm(applyPromo(code))}>Apply</button></div>}{pm&&<small className="err">{pm}</small>}
+        <div className="cdrawer__f"><p><span>Subtotal</span><b>{money(totals.subtotal)}</b></p>{totals.discount>0&&<p className="g"><span>Promo</span><b>−{money(totals.discount)}</b></p>}<p><span>Delivery</span><b>{totals.delivery?money(totals.delivery):'Free'}</b></p>{totals.delivery>0&&<small>Free delivery over {money(APP.freeDeliveryOver)}</small>}<p className="tot"><span>Total</span><b>{money(totals.total)}</b></p></div>
+        {err&&<p className="alert bad">{err}</p>}<button className="btn btn--primary btn--block" disabled={busy}>{busy?<><Loader2 size={16} className="spin"/>Placing order…</>:`Place Order · ${money(totals.total)}`}</button></aside></form></div></section>)}

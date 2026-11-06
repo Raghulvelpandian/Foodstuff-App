@@ -1,0 +1,4 @@
+import FeaturedProject from '../components/FeaturedProject.jsx'; import SupplementaryProjects from '../components/SupplementaryProjects.jsx'; import ArchitectureSection from '../components/ArchitectureSection.jsx';
+import GitHubSection from '../components/GitHubSection.jsx'; import ContactSection from '../components/ContactSection.jsx';
+export default function Portfolio(){return(<><section className="sec sec--page"><div className="container"><div className="page-h ctr"><p className="eyebrow">ABOUT US</p><h1>The Tech Behind Foodstuff</h1><p className="muted">Foodstuff is a full-stack food delivery project. Here is how it's built, what else I've made, and how to get in touch.</p></div></div></section>
+  <FeaturedProject/><SupplementaryProjects/><ArchitectureSection/><GitHubSection/><ContactSection/></>)}

@@ -1,0 +1,22 @@
+# Whole app on http://localhost:8000 with MySQL:   docker compose up --build
+# (Local HTTP test setup. For a real domain: use HTTPS, remove SECURE_SSL_REDIRECT=0, set a strong secret and your host name.)
+services:
+  web:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      DJANGO_SECRET_KEY: change-me-to-a-long-random-string
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      SECURE_SSL_REDIRECT: "0"
+      DB_ENGINE: mysql
+      DB_NAME: foodstuff
+      DB_USER: foodstuff
+      DB_PASSWORD: change-me
+      DB_HOST: db
+    depends_on: {db: {condition: service_healthy}}
+  db:
+    image: mysql:8.4
+    environment: {MYSQL_DATABASE: foodstuff, MYSQL_USER: foodstuff, MYSQL_PASSWORD: change-me, MYSQL_ROOT_PASSWORD: change-me-root}
+    healthcheck: {test: ["CMD", "mysqladmin", "ping", "-h", "localhost"], interval: 5s, timeout: 5s, retries: 20}
+    volumes: [dbdata:/var/lib/mysql]
+volumes: {dbdata: {}}
