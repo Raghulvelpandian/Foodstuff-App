@@ -24,8 +24,8 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta: model = Product; fields = ['id', 'name', 'category', 'desc', 'price', 'emoji', 'img', 'rating', 'reviews', 'time', 'cal', 'veg', 'popular']
 
 class UserSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='full_name')
-    class Meta: model = User; fields = ['name', 'email', 'phone', 'address']
+    name = serializers.CharField(source='full_name'); emailVerified = serializers.BooleanField(source='email_verified', read_only=True)
+    class Meta: model = User; fields = ['name', 'email', 'phone', 'address', 'emailVerified']
 
 class RegisterSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=150); email = serializers.EmailField()
@@ -81,16 +81,22 @@ class OrderCreateSerializer(serializers.Serializer):
 class OrderSerializer(serializers.Serializer):
     """Read shape consumed by the React app."""
     def to_representation(self, o):
-        pay = o.payments.first(); dl = o.deliveries.first(); f = float
+        pays = list(o.payments.all()); pay = max(pays, key=lambda p: p.id) if pays else None   # the latest payment attempt
+        dl = o.deliveries.first(); f = float
         return {'id': o.reference, 'name': o.customer_name, 'phone': o.phone, 'email': o.user.email, 'address': o.delivery_address,
                 'coords': [o.latitude, o.longitude] if o.latitude is not None else None, 'notes': o.notes,
                 'payment': pay.get_payment_method_display() if pay else '', 'paymentStatus': pay.get_payment_status_display() if pay else '',
                 'items': [{'id': i.product_id, 'name': i.product_name, 'price': f(i.unit_price), 'qty': i.quantity} for i in o.items.all()],
                 'totals': {'subtotal': f(o.subtotal), 'discount': f(o.discount), 'delivery': f(o.delivery_fee), 'total': f(o.total_amount)},
-                'promo': o.promo_code or None, 'status': o.get_order_status_display(), 'createdAt': o.created_at.isoformat(),
+                'promo': o.promo_code or None, 'status': o.get_order_status_display(), 'cancellable': o.cancellable, 'createdAt': o.created_at.isoformat(),
                 'estimatedDelivery': dl.estimated_delivery.isoformat() if dl and dl.estimated_delivery else None}
 
 class ContactSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=120); email = serializers.EmailField()
     subject = serializers.CharField(max_length=200); message = serializers.CharField(min_length=10, max_length=5000)
     website = serializers.CharField(required=False, allow_blank=True, write_only=True)   # honeypot
+
+class EmailOnlySerializer(serializers.Serializer): email = serializers.EmailField()
+class UidTokenSerializer(serializers.Serializer): uid = serializers.CharField(); token = serializers.CharField()
+class PasswordResetConfirmSerializer(UidTokenSerializer): password = serializers.CharField(trim_whitespace=False)
+class PaymentChangeSerializer(serializers.Serializer): method = serializers.ChoiceField(choices=Payment.Method.choices)

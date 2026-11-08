@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 from django.core.management.base import BaseCommand
+from django.core.management.color import no_style
+from django.db import connection
 from shop.models import Category, Product
 
 class Command(BaseCommand):
@@ -18,4 +20,6 @@ class Command(BaseCommand):
             _, new = make(Product, {'id': f['id']}, dict(category=Category.objects.get(slug=f['category']), name=f['name'], description=f['desc'], price=f['price'],
                 image_url=f['img'], emoji=f['emoji'], rating=f['rating'], reviews=f['reviews'], prep_time=f['time'], calories=f['cal'], is_veg=f['veg'], is_popular=f['popular']))
             added += bool(new)
+        with connection.cursor() as c:   # PostgreSQL: move id counters past the explicit ids used above
+            for sql in connection.ops.sequence_reset_sql(no_style(), [Category, Product]): c.execute(sql)
         self.stdout.write(self.style.SUCCESS(f"Menu ready: {Product.objects.count()} products in {Category.objects.count()} categories ({added} added)."))

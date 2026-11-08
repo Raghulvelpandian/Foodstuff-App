@@ -81,7 +81,7 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'] + (['rest_framework.renderers.BrowsableAPIRenderer'] if DEBUG else []),
     'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.AnonRateThrottle', 'rest_framework.throttling.UserRateThrottle',
                                  'rest_framework.throttling.ScopedRateThrottle'],
-    'DEFAULT_THROTTLE_RATES': {'anon': '300/hour', 'user': '1000/hour', 'auth': '20/hour', 'orders': '60/hour', 'contact': '5/hour'},
+    'DEFAULT_THROTTLE_RATES': {'anon': '300/hour', 'user': '1000/hour', 'auth': '20/hour', 'orders': '60/hour', 'contact': '5/hour', 'password_reset': '10/hour', 'verify': '10/hour'},
     'COERCE_DECIMAL_TO_STRING': False,
     'DEFAULT_PAGINATION_CLASS': None,
 }
@@ -96,15 +96,20 @@ EMAIL_USE_TLS = env('EMAIL_USE_TLS', '1') == '1'
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', 'Foodstuff <no-reply@foodstuff.local>')
 CONTACT_RECIPIENT = env('CONTACT_RECIPIENT', '')
 
+# Links in emails point at the website (set SITE_URL to your real domain, e.g. https://foodstuff-pi.vercel.app)
+SITE_URL = env('SITE_URL', 'http://localhost:5173').rstrip('/')
+PASSWORD_RESET_TIMEOUT = 3600   # reset and verification links expire after 1 hour
+# Turn on only after SMTP email works, otherwise nobody can verify and ordering is blocked
+REQUIRE_EMAIL_VERIFICATION = env('REQUIRE_EMAIL_VERIFICATION', '0') == '1'
+
 # Business rules (prices are always recalculated on the server)
 DELIVERY_FEE = Decimal('2.99'); FREE_DELIVERY_OVER = Decimal('30.00'); PROMO_CODES = {'FRESH10': Decimal('10')}  # code -> percent off
 
 LANGUAGE_CODE = 'en-us'; TIME_ZONE = 'UTC'; USE_I18N = True; USE_TZ = True
-STATIC_URL = '/static/'; STATIC_ROOT = BASE_DIR / 'staticfiles'; DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+STATIC_URL = 'static/'; STATIC_ROOT = BASE_DIR / 'staticfiles'; DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STORAGES = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'}, 'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'}}
 # One-link deployment: Django serves the built React app (frontend/dist) and the API from the same address.
 FRONTEND_DIST = Path(env('FRONTEND_DIST') or BASE_DIR.parent / 'frontend' / 'dist')
-if FRONTEND_DIST.is_dir(): STATICFILES_DIRS = [FRONTEND_DIST]
 if FRONTEND_DIST.is_dir(): WHITENOISE_ROOT = FRONTEND_DIST
 if not DEBUG:
     SECURE = env('SECURE_SSL_REDIRECT', '1') == '1'   # set to 0 only for local HTTP testing of a production build

@@ -85,3 +85,59 @@ class EnsureAdminTests(Base):
                 call_command('ensure_admin', stdout=out); call_command('ensure_admin', stdout=out)
             finally: os.environ.pop('ADMIN_EMAIL'); os.environ.pop('ADMIN_PASSWORD')
         u = User.objects.get(email='boss@x.com'); self.assertTrue(u.is_superuser and u.is_staff); self.assertEqual(User.objects.filter(email='boss@x.com').count(), 1)
+
+import re
+def link_params(msg):
+    m = re.search(r'uid=([^&\s]+)&token=([^\s]+)', msg.body); return m.group(1), m.group(2)
+
+class PasswordResetTests(Base):
+    def test_full_flow(self):
+        self.register('r@x.com'); self.client.credentials(); mail.outbox.clear()
+        a = self.client.post('/api/auth/password-reset/', {'email': 'nobody@x.com'}, format='json'); self.assertEqual(a.status_code, 200); self.assertEqual(len(mail.outbox), 0)   # no enumeration
+        b = self.client.post('/api/auth/password-reset/', {'email': 'R@x.com'}, format='json'); self.assertEqual(b.data, a.data); self.assertEqual(len(mail.outbox), 1)
+        uid, token = link_params(mail.outbox[0]); self.assertIn('/reset-password?', mail.outbox[0].body)
+        self.assertEqual(self.client.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': token, 'password': '123'}, format='json').status_code, 400)   # weak
+        self.assertEqual(self.client.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': 'bad', 'password': 'N3w-secret-pw!'}, format='json').status_code, 400)
+        self.assertEqual(self.client.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': token, 'password': 'N3w-secret-pw!'}, format='json').status_code, 200)
+        self.assertEqual(self.client.post('/api/auth/login/', {'email': 'r@x.com', 'password': 'N3w-secret-pw!'}, format='json').status_code, 200)
+        self.assertEqual(self.client.post('/api/auth/login/', {'email': 'r@x.com', 'password': 'Sup3r-secret!'}, format='json').status_code, 401)
+        cache.clear()   # the rate limit is covered separately
+        self.assertEqual(self.client.post('/api/auth/password-reset/confirm/', {'uid': uid, 'token': token, 'password': 'An0ther-pw-99!'}, format='json').status_code, 400)   # single use
+    def test_rate_limited(self):
+        codes = [self.client.post('/api/auth/password-reset/', {'email': 'a@b.com'}, format='json').status_code for _ in range(12)]; self.assertEqual(codes[:10], [200] * 10); self.assertEqual(codes[10], 429)
+
+class VerificationTests(Base):
+    def test_verify_flow_and_enforcement(self):
+        r = self.register('v@x.com'); self.assertFalse(r.data['user']['emailVerified']); self.assertEqual(len(mail.outbox), 1)
+        uid, token = link_params(mail.outbox[0])
+        with self.settings(REQUIRE_EMAIL_VERIFICATION=True): self.assertEqual(self.client.post('/api/orders/', ORDER(), format='json').status_code, 403)
+        self.assertEqual(self.client.post('/api/auth/verify-email/', {'uid': uid, 'token': 'nope'}, format='json').status_code, 400)
+        ok = self.client.post('/api/auth/verify-email/', {'uid': uid, 'token': token}, format='json'); self.assertEqual(ok.status_code, 200); self.assertTrue(ok.data['user']['emailVerified'])
+        self.assertEqual(self.client.post('/api/auth/verify-email/', {'uid': uid, 'token': token}, format='json').status_code, 400)   # link dead once used
+        with self.settings(REQUIRE_EMAIL_VERIFICATION=True): self.assertEqual(self.client.post('/api/orders/', ORDER(), format='json').status_code, 201)
+    def test_resend_and_default_not_enforced(self):
+        self.register('w@x.com'); mail.outbox.clear(); self.assertEqual(self.client.post('/api/auth/resend-verification/').status_code, 200); self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(self.client.post('/api/orders/', ORDER(), format='json').status_code, 201)   # enforcement is off by default
+        self.client.credentials(); self.assertEqual(self.client.post('/api/auth/resend-verification/').status_code, 401)
+
+class CancelAndPaymentTests(Base):
+    def place(self): self.register(); return self.client.post('/api/orders/', ORDER(payment_method='online'), format='json').data['id']
+    def test_cancel_rules(self):
+        ref = self.place(); self.assertTrue(self.client.get(f'/api/orders/{ref}/').data['cancellable'])
+        r = self.client.post(f'/api/orders/{ref}/cancel/'); self.assertEqual(r.status_code, 200); self.assertEqual(r.data['status'], 'Cancelled'); self.assertFalse(r.data['cancellable'])
+        again = self.client.post(f'/api/orders/{ref}/cancel/'); self.assertEqual(again.status_code, 409); self.assertIn('already cancelled', again.data['detail'])
+        self.assertEqual(Order.objects.get(reference=ref).deliveries.first().delivery_status, 'cancelled')
+    def test_cannot_cancel_after_preparing_and_not_others(self):
+        ref = self.place(); o = Order.objects.get(reference=ref); o.order_status = 'preparing'; o.save()
+        self.assertEqual(self.client.post(f'/api/orders/{ref}/cancel/').status_code, 409)
+        self.client.credentials(); self.register('o@x.com'); self.assertEqual(self.client.post(f'/api/orders/{ref}/cancel/').status_code, 404)
+    def test_paid_order_cancel_marks_refund(self):
+        ref = self.place(); Payment.objects.filter(order__reference=ref).update(payment_status='paid')
+        self.client.post(f'/api/orders/{ref}/cancel/'); self.assertEqual(Payment.objects.get(order__reference=ref).payment_status, 'refunded')
+    def test_payment_failed_recovery(self):
+        ref = self.place(); self.assertEqual(self.client.post(f'/api/orders/{ref}/payment/', {'method': 'cod'}, format='json').status_code, 409)   # not failed yet
+        Payment.objects.filter(order__reference=ref).update(payment_status='failed'); self.assertEqual(self.client.get(f'/api/orders/{ref}/').data['paymentStatus'], 'Failed')
+        r = self.client.post(f'/api/orders/{ref}/payment/', {'method': 'cod'}, format='json'); self.assertEqual(r.status_code, 200)
+        self.assertEqual(Order.objects.get(reference=ref).payments.count(), 2)
+        self.assertEqual((r.data['payment'], r.data['paymentStatus']), ('Cash on delivery', 'Pending'))   # shows the newest attempt, not the failed one
+        self.assertEqual(self.client.get(f'/api/orders/{ref}/').data['paymentStatus'], 'Pending'); self.assertEqual(self.client.get('/api/orders/').data[0]['payment'], 'Cash on delivery')

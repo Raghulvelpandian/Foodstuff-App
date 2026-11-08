@@ -11,7 +11,7 @@ class UserManager(BaseUserManager):
         user = self.model(email=self.normalize_email(email).lower(), **extra)
         user.set_password(password); user.save(using=self._db); return user
     def create_superuser(self, email, password=None, **extra):
-        extra.setdefault('is_staff', True); extra.setdefault('is_superuser', True)
+        extra.setdefault('is_staff', True); extra.setdefault('is_superuser', True); extra.setdefault('email_verified', True)
         return self.create_user(email, password, **extra)
 
 class User(AbstractUser):
@@ -21,6 +21,7 @@ class User(AbstractUser):
     full_name = models.CharField(max_length=150)
     phone = models.CharField(max_length=30, blank=True)
     address = models.CharField(max_length=300, blank=True)
+    email_verified = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'; REQUIRED_FIELDS = ['full_name']
     objects = UserManager()
     def __str__(self): return self.email
@@ -48,6 +49,7 @@ class Order(models.Model):
     class Status(models.TextChoices):
         CONFIRMED = 'confirmed', 'Confirmed'; PREPARING = 'preparing', 'Preparing'
         ON_THE_WAY = 'on_the_way', 'On the way'; DELIVERED = 'delivered', 'Delivered'
+        CANCELLED = 'cancelled', 'Cancelled'
     reference = models.CharField(max_length=12, unique=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='orders')
     customer_name = models.CharField(max_length=150); phone = models.CharField(max_length=30)
@@ -58,7 +60,10 @@ class Order(models.Model):
     promo_code = models.CharField(max_length=30, blank=True)
     order_status = models.CharField(max_length=12, choices=Status.choices, default=Status.CONFIRMED, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
     class Meta: ordering = ['-created_at']
+    @property
+    def cancellable(self): return self.order_status == self.Status.CONFIRMED   # only before the kitchen starts preparing
     def save(self, *a, **kw):
         if not self.reference:
             while True:
