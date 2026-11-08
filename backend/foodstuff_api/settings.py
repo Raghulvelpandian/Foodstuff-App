@@ -133,8 +133,13 @@ STORAGES = {
     }
 }
 
-FRONTEND_DIST = Path(env('FRONTEND_DIST') or BASE_DIR.parent / 'frontend' / 'dist')
-if FRONTEND_DIST.is_dir(): WHITENOISE_ROOT = FRONTEND_DIST
+FRONTEND_DIST = Path(
+    env('FRONTEND_DIST') or BASE_DIR.parent / 'frontend' / 'dist'
+)
+
+STATICFILES_DIRS = [FRONTEND_DIST] if FRONTEND_DIST.is_dir() else []
+
+
 if not DEBUG:
     SECURE = env('SECURE_SSL_REDIRECT', '1') == '1'   # set to 0 only for local HTTP testing of a production build
     SECURE_SSL_REDIRECT = SECURE; SESSION_COOKIE_SECURE = SECURE; CSRF_COOKIE_SECURE = SECURE
