@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { useConsent } from '../context/Consent.jsx';
 import { BUSINESS } from '../config.js';
-import * as C from './legalContent.js';
+import * as C from './Legalcontent.js';
 
 function Doc({ doc }) {
   const { setOpen } = useConsent();
