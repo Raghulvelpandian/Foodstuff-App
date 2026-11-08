@@ -1,8 +1,9 @@
 import {createContext,useContext,useEffect,useMemo,useState,useCallback} from 'react';
-import {APP} from '../config.js'; import * as api from '../services/api.js'; import {CATEGORIES} from '../data/foods.js';
+import {useConsent} from './Consent.jsx'; import {APP} from '../config.js'; import * as api from '../services/api.js'; import {CATEGORIES} from '../data/foods.js';
 const Ctx=createContext(null);export const useApp=()=>useContext(Ctx);
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 export function AppProvider({children}){
+  const {consent}=useConsent();
   const [cats,setCats]=useState(CATEGORIES),[foods,setFoods]=useState([]),[loading,setLoading]=useState(true),[err,setErr]=useState('');
   const [cart,setCart]=useState(()=>load('fs:cart',[])),[user,setUser]=useState(()=>load('fs:user',null)),[promo,setPromo]=useState(()=>load('fs:promo',null));
   const [location,setLocation]=useState(()=>load('fs:loc','Your Location')),[cartOpen,setCartOpen]=useState(false),[toast,setToast]=useState(null);
@@ -12,7 +13,7 @@ export function AppProvider({children}){
   useEffect(()=>{localStorage.setItem('fs:cart',JSON.stringify(cart))},[cart]);
   useEffect(()=>{localStorage.setItem('fs:user',JSON.stringify(user))},[user]);
   useEffect(()=>{localStorage.setItem('fs:promo',JSON.stringify(promo))},[promo]);
-  useEffect(()=>{localStorage.setItem('fs:loc',JSON.stringify(location))},[location]);
+  useEffect(()=>{if(consent.preferences)localStorage.setItem('fs:loc',JSON.stringify(location));else localStorage.removeItem('fs:loc')},[location,consent.preferences]);   // saved only with the Preferences choice
   useEffect(()=>{if(!toast)return;const t=setTimeout(()=>setToast(null),2600);return()=>clearTimeout(t)},[toast]);
   const notify=useCallback(m=>setToast({m,k:Date.now()}),[]);
   const lines=useMemo(()=>cart.map(c=>({food:foods.find(f=>f.id===c.id),qty:c.qty})).filter(l=>l.food),[cart,foods]);
@@ -24,7 +25,8 @@ export function AppProvider({children}){
   const qtyOf=id=>cart.find(c=>c.id===id)?.qty||0;
   const applyPromo=code=>{if(code.trim().toUpperCase()===APP.promoCode){setPromo(APP.promoCode);return''}return'That promo code is not valid.'};
   const auth=fn=>async d=>{const u=await fn(d);setUser(u);return u};
-  const value={foods,loading,err,cats,cart,lines,count,totals,promo,add,setQty,qtyOf,clear:()=>setCart([]),applyPromo,removePromo:()=>setPromo(null),
+  const refreshUser=async()=>{try{const u=await api.getMe();if(u)setUser(u)}catch{}};
+  const value={refreshUser,foods,loading,err,cats,cart,lines,count,totals,promo,add,setQty,qtyOf,clear:()=>setCart([]),applyPromo,removePromo:()=>setPromo(null),
     user,login:auth(api.login),signup:auth(api.signup),logout:()=>{api.logout();setUser(null);notify('Signed out')},location,setLocation,cartOpen,setCartOpen,toast,notify};
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

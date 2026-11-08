@@ -5,12 +5,13 @@ import {useApp} from '../context/AppContext.jsx'; import * as api from '../servi
 export default function Checkout(){
   const {user,lines,totals,promo,applyPromo,removePromo,clear,location,notify}=useApp(),nav=useNavigate(),loc=useLocation();
   const [f,setF]=useState({name:user?.name||'',phone:user?.phone||'',address:user?.address||(location!=='Your Location'?location:''),notes:'',coords:null}),[pay,setPay]=useState('online'),[e,setE]=useState({}),[busy,setBusy]=useState(false),[err,setErr]=useState('');
-  const [code,setCode]=useState(''),[pm,setPm]=useState('');
+  const [code,setCode]=useState(''),[pm,setPm]=useState(''),[agree,setAgree]=useState(false);
   if(!user)return<Navigate to="/login" state={{from:loc.pathname}} replace/>;
   if(!lines.length)return<div className="container sec sec--page"><div className="empty-s"><h4>Your cart is empty</h4><p>Add some food before checking out.</p><Link className="btn btn--primary" to="/foods">Browse Foods</Link></div></div>;
   const on=ev=>{setF({...f,[ev.target.name]:ev.target.value});setE({...e,[ev.target.name]:''})};
   async function submit(ev){ev.preventDefault();if(busy)return;const x={};
     if(!f.name.trim())x.name='Enter the recipient name.';if(!/^[+\d][\d\s-]{6,}$/.test(f.phone.trim()))x.phone='Enter a valid phone number.';if(f.address.trim().length<8)x.address='Search and select your delivery address.';
+    if(!agree)x.agree='Please accept the policies to place your order.';
     setE(x);if(Object.keys(x).length)return;setBusy(true);setErr('');
     try{const o=await api.placeOrder({email:user.email,name:f.name,phone:f.phone,address:f.address,coords:f.coords,notes:f.notes,paymentMethod:pay,payment:pay==='online'?'Online (simulated)':'Cash on delivery',
       items:lines.map(l=>({id:l.food.id,name:l.food.name,price:l.food.price,qty:l.qty})),totals,promo});clear();removePromo();notify('Order placed!');nav(`/orders/${o.id}`,{replace:true})}
@@ -23,4 +24,5 @@ export default function Checkout(){
       <aside className="card co__s"><h3>Order summary</h3><ul>{lines.map(({food:x,qty})=><li key={x.id}><FoodImg food={x} className="fimg--s"/><span>{x.name} <small>× {qty}</small></span><b>{money(x.price*qty)}</b></li>)}</ul>
         {promo?<p className="alert ok"><Tag size={14}/>{promo} applied <button type="button" className="link" onClick={removePromo}>Remove</button></p>:<div className="promo-f"><input value={code} onChange={ev=>{setCode(ev.target.value);setPm('')}} placeholder="Promo code" aria-label="Promo code"/><button type="button" className="btn btn--ghost btn--sm" onClick={()=>setPm(applyPromo(code))}>Apply</button></div>}{pm&&<small className="err">{pm}</small>}
         <div className="cdrawer__f"><p><span>Subtotal</span><b>{money(totals.subtotal)}</b></p>{totals.discount>0&&<p className="g"><span>Promo</span><b>−{money(totals.discount)}</b></p>}<p><span>Delivery</span><b>{totals.delivery?money(totals.delivery):'Free'}</b></p>{totals.delivery>0&&<small>Free delivery over {money(APP.freeDeliveryOver)}</small>}<p className="tot"><span>Total</span><b>{money(totals.total)}</b></p></div>
+        <div className={`fld ${e.agree?'has-err':''}`}><label className="check"><input type="checkbox" checked={agree} onChange={ev=>{setAgree(ev.target.checked);setE({...e,agree:''})}} aria-invalid={!!e.agree}/><span>I agree to the <Link className="link" to="/privacy" target="_blank">Privacy Policy</Link> and the <Link className="link" to="/refunds" target="_blank">Refund &amp; Cancellation Policy</Link>.</span></label>{e.agree&&<small role="alert">{e.agree}</small>}</div>
         {err&&<p className="alert bad">{err}</p>}<button className="btn btn--primary btn--block" disabled={busy}>{busy?<><Loader2 size={16} className="spin"/>Placing order…</>:`Place Order · ${money(totals.total)}`}</button></aside></form></div></section>)}
