@@ -105,10 +105,34 @@ REQUIRE_EMAIL_VERIFICATION = env('REQUIRE_EMAIL_VERIFICATION', '0') == '1'
 # Business rules (prices are always recalculated on the server)
 DELIVERY_FEE = Decimal('2.99'); FREE_DELIVERY_OVER = Decimal('30.00'); PROMO_CODES = {'FRESH10': Decimal('10')}  # code -> percent off
 
-LANGUAGE_CODE = 'en-us'; TIME_ZONE = 'UTC'; USE_I18N = True; USE_TZ = True
-STATIC_URL = 'static/'; STATIC_ROOT = BASE_DIR / 'staticfiles'; DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-STORAGES = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'}, 'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'}}
-# One-link deployment: Django serves the built React app (frontend/dist) and the API from the same address.
+
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# Django static files
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# React frontend build directory
+FRONTEND_DIST = Path(
+    env('FRONTEND_DIST') or BASE_DIR.parent / 'frontend' / 'dist'
+)
+
+# Include React assets in Django collectstatic
+STATICFILES_DIRS = [FRONTEND_DIST] if FRONTEND_DIST.is_dir() else []
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage'
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'
+    }
+}
+
 FRONTEND_DIST = Path(env('FRONTEND_DIST') or BASE_DIR.parent / 'frontend' / 'dist')
 if FRONTEND_DIST.is_dir(): WHITENOISE_ROOT = FRONTEND_DIST
 if not DEBUG:
