@@ -23,7 +23,7 @@ import ForgotPassword from './pages/Forgetpassword.jsx';
 import ResetPassword from './pages/Resetpassword.jsx';
 import VerifyEmail from './pages/Verifyemail.jsx';
 import PaymentFailed from './pages/PaymentFailed.jsx';
-import Portfolio from './pages/Portfolio.jsx';
+import Cravings from './pages/Cravings.jsx';
 import NotFound from './pages/NotFound.jsx';
 
 export default function App() {
@@ -58,7 +58,7 @@ export default function App() {
           element={<PaymentFailed />}
         />
 
-        <Route path="about" element={<Portfolio />} />
+        <Route path="cravings" element={<Cravings />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

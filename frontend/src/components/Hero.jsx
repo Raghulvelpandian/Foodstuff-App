@@ -1,22 +1,32 @@
-import {Star,Truck,Users,Clock,Leaf,Heart} from 'lucide-react';
+import {ArrowRight,Clock,Leaf,Star} from 'lucide-react';
 import {Link} from 'react-router-dom';
-import {CONFIG} from '../config.js';
+import {FOODS} from '../data/foods.js';
+import {money} from '../lib/format.js';
+import './BurgerHero.css';
+
+const FEATURED=FOODS[0];
+
 export default function Hero(){
-  return(<section id="home" className="hero"><div className="container hero__in">
-    <div className="hero__txt">
-      <p className="eyebrow">FRESH FOOD, DELIVERED FAST</p>
-      <h1><span className="accent">Delicious Food,</span> Delivered Straight to Your Door.</h1>
-      <p className="lead">Discover your favourite meals, fresh ingredients, and delicious treats. Order online and enjoy quality food delivered right to your doorstep.</p>
-      <div className="row"><Link to="/foods" className="btn btn--primary">Explore Foods</Link><Link to="/popular" className="btn btn--ghost">Order Now</Link></div>
-      <ul className="trust">
-        <li><Users size={18}/><span><b>10K+</b> Happy Customers</span></li>
-        <li><Star size={18}/><span><b>4.9/5</b> Customer Rating</span></li>
-        <li><Truck size={18}/><span><b>Fast</b> Delivery</span></li></ul>
+  return(<section id="home" className="hero burger-hero"><div className="container burger-hero__inner">
+    <div className="burger-hero__copy">
+      <p className="burger-hero__eyebrow">Fresh food, delivered fast</p>
+      <h1 className="burger-hero__title"><span>Good food.</span><span className="burger-hero__amber">Big mood.</span><span>Zero fuss.</span></h1>
+      <p className="burger-hero__lead">Big, juicy flavours from local kitchens, delivered to your door while they’re still hot. Meet your new favourite meal.</p>
+      <div className="burger-hero__actions"><Link to={`/food/${FEATURED.id}`} className="burger-hero__primary">Try the {FEATURED.name}<ArrowRight size={17}/></Link><Link to="/foods" className="burger-hero__secondary">Explore the menu</Link></div>
+      <div className="burger-hero__proof"><span className="burger-hero__proof-icon"><Star size={15} fill="currentColor"/></span><span><b>{FEATURED.rating} · {FEATURED.reviews} reviews</b><small>Loved by 10K+ food fans</small></span></div>
     </div>
-    <div className="hero__vis">
-      <div className="hero__img"><img src={CONFIG.heroImage} alt="Assortment of burgers, pizza, fries, salad and drinks" loading="eager"/></div>
-      <div className="float f1"><Clock size={18}/><div><b>30 Min Delivery</b><small>Hot &amp; on time</small></div></div>
-      <div className="float f2"><Leaf size={18}/><div><b>Fresh &amp; Quality Food</b><small>Local kitchens</small></div></div>
-      <div className="float f3"><Heart size={18}/><div><b>Customer Favourite</b><small>Top rated</small></div></div>
-    </div></div></section>);
+    <div className="burger-hero__visual" aria-label={FEATURED.name}>
+      <div className="burger-hero__orb" aria-hidden="true"/>
+      <figure className="burger-hero__photo"><img src={FEATURED.img} alt={FEATURED.name} fetchPriority="high"/><figcaption><span>Classic Smash Burger</span><b>{money(FEATURED.price)}</b></figcaption></figure>
+      <div className="burger-hero__badge burger-hero__badge--fresh"><Leaf size={15}/><span>Fresh from<br/><b>local kitchens</b></span></div>
+      <div className="burger-hero__badge burger-hero__badge--time"><Clock size={16}/><span><b>{FEATURED.time} min</b><br/>delivery</span></div>
+      <span className="burger-hero__ingredient burger-hero__ingredient--tomato" aria-hidden="true">🍅</span>
+      <span className="burger-hero__ingredient burger-hero__ingredient--leaf" aria-hidden="true">🥬</span>
+      <span className="burger-hero__ingredient burger-hero__ingredient--cheese" aria-hidden="true">🧀</span>
+      <span className="burger-hero__spark burger-hero__spark--one" aria-hidden="true">✳</span>
+      <span className="burger-hero__spark burger-hero__spark--two" aria-hidden="true">✦</span>
+    </div>
+  </div>
+  <div className="burger-hero__ribbon"><span>Local kitchens · quality ingredients</span><b>Made to crave <i>✦</i> made for you</b><span>Good food, right on time</span></div>
+  </section>);
 }

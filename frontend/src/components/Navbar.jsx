@@ -2,7 +2,7 @@ import {useState,useEffect} from 'react';
 import {Link,NavLink,useNavigate} from 'react-router-dom';
 import {Search,MapPin,ShoppingCart,Menu,X,UtensilsCrossed,User,LogOut,Package} from 'lucide-react';
 import AddressSearch from './AddressSearch.jsx'; import {useApp} from '../context/AppContext.jsx'; import SearchOverlay from './SearchOverlay.jsx';
-const LINKS=[['Home','/'],['Explore Foods','/foods'],['Categories','/categories'],['Popular','/popular'],['About Us','/about']];
+const LINKS=[['Home','/'],['Explore Foods','/foods'],['Categories','/categories'],['Popular','/popular'],['Find Your Craving','/cravings']];
 export default function Navbar(){
   const {count,setCartOpen,user,logout,location,setLocation}=useApp(),nav=useNavigate();
   const [open,setOpen]=useState(false),[scrolled,setScrolled]=useState(false),[search,setSearch]=useState(false),[locOpen,setLocOpen]=useState(false),[um,setUm]=useState(false),[loc,setLoc]=useState(location);

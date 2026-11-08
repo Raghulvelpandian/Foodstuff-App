@@ -1,0 +1,41 @@
+.crave-page{padding-top:56px;padding-bottom:84px;background:linear-gradient(180deg,#fff7ed 0,#fff9f3 360px)}
+.crave-head{max-width:680px;margin:0 auto 28px;text-align:center}
+.crave-head .eyebrow{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 0 10px;color:#9b4b20;font-size:.73rem;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+.crave-head h1{color:#2d160d;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:850;letter-spacing:-.045em}
+.crave-head>p:last-child{margin-top:10px;color:var(--mut);font-size:1rem}
+.crave-moods{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:900px;margin:0 auto 22px}
+.crave-mood{display:flex;align-items:center;gap:11px;min-height:68px;padding:12px 16px;border:1px solid #ead9c6;border-radius:16px;background:#fff;color:#4e3427;text-align:left;cursor:pointer;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.crave-mood:hover{transform:translateY(-2px);border-color:#e8a071;box-shadow:0 8px 20px rgba(67,31,14,.08)}
+.crave-mood[aria-pressed="true"]{border-color:#fa8101;background:#fff0dd;box-shadow:inset 0 0 0 1px #fa8101}
+.crave-mood span{font-size:1.55rem}
+.crave-mood b{font-size:.85rem}
+.crave-pick{display:grid;grid-template-columns:.72fr 1.28fr;gap:25px;align-items:center;padding:27px;border-radius:25px;background:radial-gradient(circle at 12% 10%,#6d3518 0,#35150a 42%,#2d0501 100%);color:#fff3e2;box-shadow:0 18px 45px rgba(55,21,8,.15)}
+.crave-pick__copy{padding:12px 4px}
+.crave-label{margin:0;color:#b55b25;font-size:.67rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.crave-pick__copy .crave-label{color:#ffb76c}
+.crave-pick__copy h2{margin:8px 0 9px;color:#fff3e2;font-size:clamp(1.8rem,3vw,2.5rem);line-height:1.03;letter-spacing:-.04em}
+.crave-pick__copy>p:not(.crave-label){max-width:250px;color:#dfc6aa;font-size:.9rem}
+.crave-surprise{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:10px 14px;border:1px solid rgba(255,243,226,.38);border-radius:999px;background:transparent;color:#fff3e2;font-size:.78rem;font-weight:700;cursor:pointer;transition:background .2s,border-color .2s}
+.crave-surprise:hover{border-color:#ffb76c;background:rgba(255,183,108,.12)}
+.crave-featured{display:grid;grid-template-columns:.92fr 1.08fr;gap:18px;min-width:0;padding:13px;border:1px solid #f0e5d8;border-radius:20px;background:#fffaf4;color:#2d160d;box-shadow:0 12px 25px rgba(25,10,4,.15)}
+.crave-featured__image{width:100%;height:100%;min-height:250px;aspect-ratio:1;border-radius:14px;background:#f2e1cd}
+.crave-featured__image img{width:100%;height:100%;object-fit:cover}
+.crave-featured__body{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:8px 7px 8px 0}
+.crave-featured__body h3{margin:5px 0 6px;color:#2d160d;font-size:1.35rem;font-weight:750;letter-spacing:-.025em}
+.crave-featured__body>p:not(.crave-label){margin:0;color:#746458;font-size:.79rem;line-height:1.5}
+.crave-meta{display:flex;align-items:center;gap:13px;flex-wrap:wrap;width:100%;margin:15px 0;color:#644633;font-size:.73rem}
+.crave-meta span{display:inline-flex;align-items:center;gap:4px}
+.crave-meta span:first-child svg{color:#d98b28}
+.crave-meta span:nth-child(2) svg{color:#a75424}
+.crave-meta small{color:#8a7b6e}
+.crave-meta>b{margin-left:auto;color:#a4471c;font-size:.88rem}
+.crave-featured__body .btn{gap:8px;margin-top:3px;padding:10px 16px;font-size:.78rem}
+.crave-more{margin-top:43px}
+.crave-more .sec__row{align-items:center}
+.crave-empty{max-width:600px;margin:20px auto;padding:30px;text-align:center}
+.crave-empty h2{margin-bottom:7px;font-size:1.5rem}
+.crave-empty p{margin:0 0 16px;color:var(--mut)}
+.crave-empty .btn{gap:8px}
+@media(max-width:900px){.crave-pick{grid-template-columns:1fr;gap:16px;padding:22px}.crave-pick__copy{padding:4px}.crave-pick__copy>p:not(.crave-label){max-width:500px}.crave-surprise{margin-top:13px}}
+@media(max-width:680px){.crave-page{padding-top:38px;padding-bottom:64px}.crave-moods{grid-template-columns:1fr 1fr;gap:9px}.crave-mood{min-height:60px;padding:10px 12px}.crave-featured{grid-template-columns:1fr;gap:12px}.crave-featured__image{height:auto;min-height:0;aspect-ratio:16/10}.crave-featured__body{padding:5px 5px 7px}.crave-pick{padding:17px;border-radius:20px}.crave-pick__copy h2{font-size:1.9rem}}
+@media(max-width:380px){.crave-moods{grid-template-columns:1fr}.crave-mood{min-height:52px}.crave-meta{gap:9px}}

@@ -1,7 +1,7 @@
 import {Link} from 'react-router-dom';
 import {UtensilsCrossed,Github,Linkedin,Mail,ArrowUp} from 'lucide-react';
 import {CONFIG} from '../config.js'; import {useConsent} from '../context/Consent.jsx';
-const Q=[['Home','/'],['Explore Foods','/foods'],['Categories','/categories'],['Popular','/popular'],['Featured Project','/about#featured'],['Architecture','/about#architecture'],['GitHub','/about#github'],['Contact','/about#contact']];
+const Q=[['Home','/'],['Explore Foods','/foods'],['Categories','/categories'],['Popular','/popular'],['Find Your Craving','/cravings'],['My Orders','/orders']];
 const L=[['Delivery Information','/delivery'],['Refund & Cancellation','/refunds'],['Privacy Policy','/privacy'],['Cookie Policy','/cookies']];
 export default function Footer(){
   const {setOpen}=useConsent();
